@@ -13,6 +13,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
+import android.widget.Button;
 import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
@@ -26,9 +27,6 @@ import in.jvapps.system_alert_window.models.Margin;
 import in.jvapps.system_alert_window.utils.Commons;
 import in.jvapps.system_alert_window.utils.NumberUtils;
 import in.jvapps.system_alert_window.utils.UiBuilder;
-import in.jvapps.system_alert_window.views.BodyView;
-import in.jvapps.system_alert_window.views.FooterView;
-import in.jvapps.system_alert_window.views.HeaderView;
 
 import static in.jvapps.system_alert_window.utils.Constants.*;
 
@@ -50,9 +48,6 @@ public class WindowService extends JobIntentService implements View.OnTouchListe
     private int windowHeight;
     private Margin windowMargin;
 
-    private LinearLayout headerView;
-    private LinearLayout bodyView;
-    private LinearLayout footerView;
 
     private Context mContext;
 
@@ -132,18 +127,9 @@ public class WindowService extends JobIntentService implements View.OnTouchListe
                 @SuppressWarnings("unchecked")
                 HashMap<String, Object> paramsMap = (HashMap<String, Object>) intent.getSerializableExtra(INTENT_EXTRA_PARAMS_MAP);
                 assert paramsMap != null;
-                Map<String, Object> headersMap = Commons.getMapFromObject(paramsMap, KEY_HEADER);
-                Map<String, Object> bodyMap = Commons.getMapFromObject(paramsMap, KEY_BODY);
-                Map<String, Object> footerMap = Commons.getMapFromObject(paramsMap, KEY_FOOTER);
-                windowMargin = UiBuilder.getMargin(mContext, paramsMap.get(KEY_MARGIN));
                 windowGravity = (String) paramsMap.get(KEY_GRAVITY);
                 windowWidth = NumberUtils.getInt(paramsMap.get(KEY_WIDTH));
                 windowHeight = NumberUtils.getInt(paramsMap.get(KEY_HEIGHT));
-                headerView = new HeaderView(mContext, headersMap).getView();
-                if (bodyMap != null)
-                    bodyView = new BodyView(mContext, bodyMap).getView();
-                if (footerMap != null)
-                    footerView = new FooterView(mContext, footerMap).getView();
                 if (wm != null) {
                     showWindow(isUpdateWindow);
                 } else {
@@ -196,7 +182,7 @@ public class WindowService extends JobIntentService implements View.OnTouchListe
         //windowView.setOnTouchListener(this);
         oServiceHandler.post(() -> {
             LinearLayout.LayoutParams contentParams = new LinearLayout.LayoutParams(params.width, params.height);
-            WindowService.this.buildWindowView(contentParams, params.width == LayoutParams.MATCH_PARENT);
+            WindowService.this.buildWindowView(contentParams, false);
             //wm.addView(windowView, params);
         });
         oServiceHandler.post(() -> {
@@ -208,15 +194,15 @@ public class WindowService extends JobIntentService implements View.OnTouchListe
     @SuppressLint("ClickableViewAccessibility")
     private void buildWindowView(LinearLayout.LayoutParams params, boolean enableDraggable) {
         windowView = new LinearLayout(mContext);
-        windowView.setOrientation(LinearLayout.VERTICAL);
+        windowView.setOrientation(LinearLayout.HORIZONTAL);
         windowView.setBackgroundColor(Color.WHITE);
+
+        Button button1 = new Button(mContext);
+        button1.setText("BUTTON1");
+
+
+        windowView.addView(button1);
         windowView.setLayoutParams(params);
-        windowView.removeAllViews();
-        windowView.addView(headerView);
-        if (bodyView != null)
-            windowView.addView(bodyView);
-        if (footerView != null)
-            windowView.addView(footerView);
         if (enableDraggable)
             windowView.setOnTouchListener(this);
     }
