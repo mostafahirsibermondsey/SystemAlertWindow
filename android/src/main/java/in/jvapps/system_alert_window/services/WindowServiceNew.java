@@ -1,6 +1,7 @@
 package in.jvapps.system_alert_window.services;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -12,6 +13,7 @@ import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.IBinder;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -24,7 +26,6 @@ import android.widget.Space;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.NotificationCompat;
 
 import java.util.ArrayList;
@@ -57,7 +58,7 @@ import com.google.android.flexbox.FlexLine;
 import com.google.android.flexbox.FlexWrap;
 import com.google.android.flexbox.FlexboxLayout;
 
-public class WindowServiceNew extends Service implements View.OnTouchListener {
+public class WindowServiceNew extends Service{
 
     private static final String TAG = WindowServiceNew.class.getSimpleName();
     public static final String CHANNEL_ID = "ForegroundServiceChannel";
@@ -72,7 +73,7 @@ public class WindowServiceNew extends Service implements View.OnTouchListener {
     private int windowHeight;
     private Margin windowMargin;
 
-    private ConstraintLayout windowView;
+    private LinearLayout windowView;
 
     private float offsetX;
     private float offsetY;
@@ -145,12 +146,11 @@ public class WindowServiceNew extends Service implements View.OnTouchListener {
         windowHeight = NumberUtils.getInt(paramsMap.get(KEY_HEIGHT));
     }
 
-
     private WindowManager.LayoutParams getLayoutParams() {
         final WindowManager.LayoutParams params;
         params = new WindowManager.LayoutParams();
         params.width = (windowWidth == 0) ? android.view.WindowManager.LayoutParams.MATCH_PARENT : Commons.getPixelsFromDp(mContext, windowWidth);
-        params.height = WindowManager.LayoutParams.MATCH_PARENT;
+        params.height = android.view.WindowManager.LayoutParams.WRAP_CONTENT;
         params.format = PixelFormat.TRANSPARENT;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             params.type = android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
@@ -161,6 +161,9 @@ public class WindowServiceNew extends Service implements View.OnTouchListener {
         }
         params.gravity = Commons.getGravity(windowGravity, Gravity.BOTTOM);
 
+        DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
+        int newY = (int) (offsetY + metrics.heightPixels);
+        params.y = newY;
         return params;
     }
 
@@ -168,18 +171,18 @@ public class WindowServiceNew extends Service implements View.OnTouchListener {
     private void setWindowView(WindowManager.LayoutParams params, boolean isCreate) {
         boolean isEnableDraggable = false;//params.width == WindowManager.LayoutParams.MATCH_PARENT;
         if (isCreate) {
-            windowView = new ConstraintLayout(mContext);
+            windowView = new LinearLayout(mContext);
         }
 
+        windowView.setBackgroundColor(Color.GRAY);
+        windowView.setLayoutParams(params);
 
         WindowManager.LayoutParams param = new WindowManager.LayoutParams();
         param.width = android.view.WindowManager.LayoutParams.MATCH_PARENT;
 
         LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
-        windowView = (ConstraintLayout) inflater.inflate(R.layout.flexbox_layout, null);
+        windowView = (LinearLayout) inflater.inflate(R.layout.flexbox_layout, null);
 
-
-//        windowView.setOnTouchListener(this);
     }
 
     private void createWindow(HashMap<String, Object> paramsMap) {
@@ -187,7 +190,6 @@ public class WindowServiceNew extends Service implements View.OnTouchListener {
         setWindowManager();
         setWindowLayoutFromMap(paramsMap);
         WindowManager.LayoutParams params = getLayoutParams();
-//        WindowManager.LayoutParams params = new WindowManager.LayoutParams();
         setWindowView(params, true);
         wm.addView(windowView, params);
     }
@@ -215,40 +217,6 @@ public class WindowServiceNew extends Service implements View.OnTouchListener {
         if(isEverythingDone){
             stopSelf();
         }
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    @Override
-    public boolean onTouch(View v, MotionEvent event) {
-        if (null != wm) {
-            if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                float x = event.getRawX();
-                float y = event.getRawY();
-                moving = false;
-                int[] location = new int[2];
-                windowView.getLocationOnScreen(location);
-                originalXPos = location[0];
-                originalYPos = location[1];
-                offsetX = originalXPos - x;
-                offsetY = originalYPos - y;
-            } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
-                float x = event.getRawX();
-                float y = event.getRawY();
-                WindowManager.LayoutParams params = (WindowManager.LayoutParams) windowView.getLayoutParams();
-                int newX = (int) (offsetX + x);
-                int newY = (int) (offsetY + y);
-                if (Math.abs(newX - originalXPos) < 1 && Math.abs(newY - originalYPos) < 1 && !moving) {
-                    return false;
-                }
-                params.x = newX;
-                params.y = newY;
-                wm.updateViewLayout(windowView, params);
-                moving = true;
-            } else if (event.getAction() == MotionEvent.ACTION_UP) {
-                return moving;
-            }
-        }
-        return false;
     }
 
     @Override
