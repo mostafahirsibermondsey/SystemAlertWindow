@@ -21,6 +21,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Space;
 
@@ -42,6 +43,7 @@ import in.jvapps.system_alert_window.models.Margin;
 import in.jvapps.system_alert_window.utils.Commons;
 import in.jvapps.system_alert_window.utils.NumberUtils;
 import in.jvapps.system_alert_window.utils.UiBuilder;
+
 
 import static in.jvapps.system_alert_window.utils.Constants.INTENT_EXTRA_PARAMS_MAP;
 import static in.jvapps.system_alert_window.utils.Constants.KEY_BODY;
@@ -82,6 +84,7 @@ public class WindowServiceNew extends Service{
     private boolean moving;
 
     private Context mContext;
+    static final String CALLBACK_TYPE_ONCLICK = "onClick";
 
     @Override
     public void onCreate() {
@@ -169,7 +172,6 @@ public class WindowServiceNew extends Service{
 
     @SuppressLint("ClickableViewAccessibility")
     private void setWindowView(WindowManager.LayoutParams params, boolean isCreate) {
-        boolean isEnableDraggable = false;//params.width == WindowManager.LayoutParams.MATCH_PARENT;
         if (isCreate) {
             windowView = new LinearLayout(mContext);
         }
@@ -183,6 +185,27 @@ public class WindowServiceNew extends Service{
         LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
         windowView = (LinearLayout) inflater.inflate(R.layout.flexbox_layout, null);
 
+        ImageButton backBtn = windowView.findViewById(R.id.back_button);
+        backBtn.setOnClickListener(v -> {
+            if (!SystemAlertWindowPlugin.sIsIsolateRunning.get()) {
+                SystemAlertWindowPlugin.startCallBackHandler(mContext);
+            }
+            SystemAlertWindowPlugin.invokeCallBack(mContext, CALLBACK_TYPE_ONCLICK, "back_button");
+        });
+        ImageButton homeBtn = windowView.findViewById(R.id.home_button);
+        homeBtn.setOnClickListener(v -> {
+            if (!SystemAlertWindowPlugin.sIsIsolateRunning.get()) {
+                SystemAlertWindowPlugin.startCallBackHandler(mContext);
+            }
+            SystemAlertWindowPlugin.invokeCallBack(mContext, CALLBACK_TYPE_ONCLICK, "home_button");
+        });
+        ImageButton settingsBtn = windowView.findViewById(R.id.settings_button);
+        settingsBtn.setOnClickListener(v -> {
+            if (!SystemAlertWindowPlugin.sIsIsolateRunning.get()) {
+                SystemAlertWindowPlugin.startCallBackHandler(mContext);
+            }
+            SystemAlertWindowPlugin.invokeCallBack(mContext, CALLBACK_TYPE_ONCLICK, "settings_button");
+        });
     }
 
     private void createWindow(HashMap<String, Object> paramsMap) {
